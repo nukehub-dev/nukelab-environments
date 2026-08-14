@@ -47,6 +47,12 @@ All files under this repository root.
 - Use BuildKit cache mounts (`--mount=type=cache`) for C++ compilation and
   package managers.
 - Pin upstream versions with `ARG`s at the top of each Dockerfile.
+- Large datasets (cross-sections, chain files) live under `/opt/nuke/data/<name>`
+  so data is visibly separate from code; Geant4 datasets are the exception and
+  stay at Geant4's native `${NUKE_DIR}/geant4/share/data` (its discovery
+  machinery is tied to the install tree). A future enhancement may move big
+  datasets to a dedicated shared data volume so code and data refresh
+  independently — see the main repo `docs/plan/DECISION-LOG.md` (2026-08-15).
 - Do not bake secrets or credentials into images.
 - Update this `AGENTS.md` and `README.md` when adding, removing, or reparenting
   an environment image.

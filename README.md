@@ -87,7 +87,7 @@ Example manifest:
   "version": "v1.0.0-3-gdeadbee",
   "mounts": ["/opt/nuke"],
   "env": {
-    "OPENMC_DATA_DIR": "/opt/nuke/openmc_data"
+    "OPENMC_DATA_DIR": "/opt/nuke/data/openmc"
   },
   "env_prepend": {
     "PATH": "/opt/nuke/bin:/opt/nuke/moab/bin:...",

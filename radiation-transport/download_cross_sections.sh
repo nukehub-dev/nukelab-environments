@@ -14,7 +14,7 @@ set -euo pipefail
 
 # Assign command line arguments to variables
 download_cross_section_data=${1:-OFF}
-cross_section_data_lib=${2:-/opt/openmc_data}
+cross_section_data_lib=${2:-/opt/nuke/data/openmc}
 
 if [ "$download_cross_section_data" == "ON" ]; then
 	mkdir -p "${cross_section_data_lib}"

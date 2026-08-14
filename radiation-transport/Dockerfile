@@ -39,7 +39,7 @@ ENV NUKE_DIR=/opt/nuke
 ENV OPENMC_ROOT=${NUKE_DIR}/openmc \
     KDSOURCE_ROOT=${NUKE_DIR}/kdsource \
     ALARA_ROOT=${NUKE_DIR}/alara \
-    OPENMC_DATA_DIR=${NUKE_DIR}/openmc_data \
+    OPENMC_DATA_DIR=${NUKE_DIR}/data/openmc \
     OPENMC_CROSS_SECTIONS=${OPENMC_DATA_DIR}/lib80x_hdf5/cross_sections.xml \
     OPENMC_CHAIN_FILE=${OPENMC_DATA_DIR}/chain/chain_endfb80_thermal.xml
 

@@ -14,7 +14,7 @@
 set -euo pipefail
 
 download_chain_data=${1:-OFF}
-chain_data_dir=${2:-/opt/openmc_data}
+chain_data_dir=${2:-/opt/nuke/data/openmc}
 
 if [ "$download_chain_data" == "ON" ]; then
 	mkdir -p "${chain_data_dir}/chain"
