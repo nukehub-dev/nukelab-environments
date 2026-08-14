@@ -74,32 +74,13 @@ RUN conda config --system --append envs_dirs /opt/nuke
 RUN mkdir -p /opt/nuke/etc
 COPY nuke-env.sh /opt/nuke/etc/toolchain-env.sh
 
-# Generate the toolchain manifest from the activation script so the spawner
-# knows which paths to mount and which env vars to inject into the container.
-ARG BASE_TAG
-RUN python3 - <<'PY'
-import json, os, re
-script = "/opt/nuke/etc/toolchain-env.sh"
-env = {}
-with open(script) as f:
-    for line in f:
-        line = line.strip()
-        if line.startswith("export "):
-            for assignment in line[7:].split():
-                if "=" in assignment:
-                    key, val = assignment.split("=", 1)
-                    if val.startswith('"') and val.endswith('"'):
-                        val = val[1:-1]
-                    env[key] = val
-manifest = {
-    "name": "nuclear-base",
-    "version": os.environ.get("BASE_TAG", "v1.0.0"),
-    "mounts": ["/opt/nuke"],
-    "env": env
-}
-with open("/opt/nuke/nukelab-toolchain.json", "w") as f:
-    json.dump(manifest, f, indent=2)
-PY
+# Generate the toolchain manifest by sourcing the activation script in a clean
+# environment. The generator is installed by the conda-base ancestor image as
+# /usr/local/bin/nukelab-generate-toolchain-manifest.
+ARG TOOLCHAIN_VERSION=dev
+RUN nukelab-generate-toolchain-manifest \
+    --name nuclear-base \
+    --version "${TOOLCHAIN_VERSION}"
 
 # Install MOAB
 RUN --mount=type=cache,target=/root/.ccache \

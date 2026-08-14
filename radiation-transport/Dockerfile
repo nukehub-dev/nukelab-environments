@@ -46,33 +46,15 @@ ENV OPENMC_ROOT=${NUKE_DIR}/openmc \
 ENV PATH="${OPENMC_ROOT}/bin:${KDSOURCE_ROOT}/bin:${ALARA_ROOT}/bin:${PATH}" \
     LD_LIBRARY_PATH="${OPENMC_ROOT}/lib:${KDSOURCE_ROOT}/lib:${LD_LIBRARY_PATH}"
 
-# Update the toolchain activation script and regenerate the manifest so the
-# spawner sees the radiation-transport specific paths and env vars.
+# Update the toolchain activation script and regenerate the manifest by
+# sourcing it in a clean environment, so the spawner sees the fully resolved
+# radiation-transport paths and env vars. The generator is installed by the
+# conda-base ancestor image as /usr/local/bin/nukelab-generate-toolchain-manifest.
 COPY nuke-env.sh /opt/nuke/etc/toolchain-env.sh
-ARG BASE_TAG
-RUN python3 - <<'PY'
-import json, os, re
-script = "/opt/nuke/etc/toolchain-env.sh"
-env = {}
-with open(script) as f:
-    for line in f:
-        line = line.strip()
-        if line.startswith("export "):
-            for assignment in line[7:].split():
-                if "=" in assignment:
-                    key, val = assignment.split("=", 1)
-                    if val.startswith('"') and val.endswith('"'):
-                        val = val[1:-1]
-                    env[key] = val
-manifest = {
-    "name": "radiation-transport",
-    "version": os.environ.get("BASE_TAG", "v1.0.0"),
-    "mounts": ["/opt/nuke"],
-    "env": env
-}
-with open("/opt/nuke/nukelab-toolchain.json", "w") as f:
-    json.dump(manifest, f, indent=2)
-PY
+ARG TOOLCHAIN_VERSION=dev
+RUN nukelab-generate-toolchain-manifest \
+    --name radiation-transport \
+    --version "${TOOLCHAIN_VERSION}"
 
 # Install OpenMC
 RUN --mount=type=cache,target=/root/.ccache \

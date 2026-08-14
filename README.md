@@ -60,19 +60,38 @@ Every toolchain image must:
 - Provide `/opt/nuke/etc/toolchain-env.sh`, which exports `PATH`,
   `LD_LIBRARY_PATH`, and any other required variables.
 - Provide `/opt/nuke/nukelab-toolchain.json`, a manifest describing mounts and
-  env vars. The manifest is generated automatically from
-  `toolchain-env.sh` during the image build.
+  env vars. The manifest is generated during the image build by
+  `nukelab-generate-toolchain-manifest` (installed at `/usr/local/bin/` by the
+  conda-base ancestor image), which sources `toolchain-env.sh` in a clean
+  environment (`env -i NUKE_DIR=/opt/nuke`) and captures the variables it
+  sets, so all values are fully resolved (no `${...}` shell syntax).
+  PATH-family variables (`PATH`, `LD_LIBRARY_PATH`, `LIBRARY_PATH`, `CPATH`,
+  `C_INCLUDE_PATH`, `CPLUS_INCLUDE_PATH`, `PKG_CONFIG_PATH`, `PYTHONPATH`,
+  `MANPATH`) go into `env_prepend`; all other script-set variables go into
+  `env`. Invoke it right after copying the activation script:
+
+  ```dockerfile
+  ARG TOOLCHAIN_VERSION=dev
+  RUN nukelab-generate-toolchain-manifest \
+      --name <image-name> \
+      --version "${TOOLCHAIN_VERSION}"
+  ```
+
+  `scripts/build.sh` passes `TOOLCHAIN_VERSION` (git describe, or `dev`).
 
 Example manifest:
 
 ```json
 {
   "name": "radiation-transport",
-  "version": "v1.0.0",
+  "version": "v1.0.0-3-gdeadbee",
   "mounts": ["/opt/nuke"],
   "env": {
-    "PATH": "/opt/nuke/bin:/opt/nuke/moab/bin:...:${PATH}",
-    "LD_LIBRARY_PATH": "/opt/nuke/moab/lib:...:${LD_LIBRARY_PATH}"
+    "OPENMC_DATA_DIR": "/opt/nuke/openmc_data"
+  },
+  "env_prepend": {
+    "PATH": "/opt/nuke/bin:/opt/nuke/moab/bin:...",
+    "LD_LIBRARY_PATH": "/opt/nuke/moab/lib:..."
   }
 }
 ```
@@ -120,7 +139,8 @@ See `.github/workflows/build-images.yml` for the matrix build configuration.
 1. Create a new directory under this repo root.
 2. Inherit from `ghcr.io/nukelab/conda-base`.
 3. Install everything under `/opt/nuke`.
-4. Provide `toolchain-env.sh` and generate the manifest (copy the pattern from
+4. Provide `toolchain-env.sh` and generate the manifest with
+   `nukelab-generate-toolchain-manifest` (copy the two-line pattern from
    `nuclear-base/` or `radiation-transport/`).
 5. Add the directory to the build matrix in `.github/workflows/build-images.yml`
    and to `scripts/build.sh`.

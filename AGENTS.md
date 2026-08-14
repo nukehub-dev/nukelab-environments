@@ -22,8 +22,15 @@ All files under this repository root.
 - Every toolchain image must provide:
   - `/opt/nuke/etc/toolchain-env.sh` — activation script exporting `PATH`,
     `LD_LIBRARY_PATH`, and any required variables.
-  - `/opt/nuke/nukelab-toolchain.json` — manifest generated from the activation
-    script describing mounts and env vars.
+  - `/opt/nuke/nukelab-toolchain.json` — manifest generated during the image
+    build by `nukelab-generate-toolchain-manifest --name <name> --version
+    "${TOOLCHAIN_VERSION}"` (installed at `/usr/local/bin/` by the conda-base
+    ancestor image). The generator sources the activation script in a clean
+    environment and captures the variables it sets. PATH-family variables
+    (`PATH`, `LD_LIBRARY_PATH`, etc.) go to `env_prepend`, all other
+    script-set variables to `env`; values are fully resolved absolute values
+    (no `${...}` shell syntax). `TOOLCHAIN_VERSION` is passed by
+    `scripts/build.sh` (git describe, or `dev`).
 - `nuclear-base/` owns the shared toolchain used by `radiation-transport/`,
   `moose/`, and `cardinal/`. Changes here trigger rebuilds of all dependent
   images.

@@ -11,6 +11,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 REGISTRY="${REGISTRY:-ghcr.io/nukelab}"
 BASE_TAG="${BASE_TAG:-v1.0.0}"
+# Version recorded in each toolchain manifest. Defaults to the git revision
+# so manifests track the source they were built from; override for releases.
+TOOLCHAIN_VERSION="${TOOLCHAIN_VERSION:-$(git -C "$REPO_ROOT" describe --tags --always --dirty 2>/dev/null || echo dev)}"
 NO_CACHE=""
 
 if [ -n "${CONTAINER_ENGINE:-}" ]; then
@@ -40,6 +43,8 @@ Images:
 Environment variables:
   REGISTRY            Image registry prefix (default: ghcr.io/nukelab)
   BASE_TAG            Version tag for parent images (default: v1.0.0)
+  TOOLCHAIN_VERSION   Version recorded in toolchain manifests
+                      (default: git describe, or "dev" outside a git checkout)
 EOF
 }
 
@@ -51,6 +56,7 @@ build_image() {
 	$ENGINE build \
 		${NO_CACHE} \
 		--build-arg BASE_TAG="${BASE_TAG}" \
+		--build-arg TOOLCHAIN_VERSION="${TOOLCHAIN_VERSION}" \
 		-t "${tag}" \
 		-f "${REPO_ROOT}/${dir}/Dockerfile" \
 		"${REPO_ROOT}/${dir}"
