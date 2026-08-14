@@ -11,9 +11,9 @@ FROM $BASE_IMAGE
 ARG CUDA_VERSION
 
 # Install the CUDA toolkit under /opt/nuke/cuda so the whole /opt/nuke
-# directory can be mounted as a single toolchain volume.
-RUN mkdir -p /opt/nuke/cuda && \
-    conda install -y -c nvidia --prefix /opt/nuke/cuda cuda-toolkit=${CUDA_VERSION} && \
+# directory can be mounted as a single toolchain volume. Use conda create
+# (not install into a pre-made dir, which conda rejects as a non-environment).
+RUN conda create -y -c nvidia --prefix /opt/nuke/cuda cuda-toolkit=${CUDA_VERSION} && \
     conda clean -afy
 
 # Activation script and manifest for runtime composition. The manifest is
