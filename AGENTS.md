@@ -1,0 +1,55 @@
+# NukeLab Environments
+
+## Purpose
+
+Scientific computing toolchain images and build pipelines for the NukeLab
+platform. Toolchain images are mounted as volumes into the `nukelab-workspace`
+runtime container rather than extending it.
+
+## Ownership
+
+All files under this repository root.
+
+## Local Contracts
+
+- Each subdirectory under the root (except `scripts/` and `.github/`) defines one
+  published toolchain image.
+- Toolchain images must inherit from a published NukeLab parent image
+  (`ghcr.io/nukelab/conda-base` for roots, or another published toolchain image
+  for extensions). They must never depend on local-only tags.
+- Every toolchain image installs software under `/opt/nuke` so the whole
+  directory can be mounted as a single volume into the workspace runtime.
+- Every toolchain image must provide:
+  - `/opt/nuke/etc/toolchain-env.sh` — activation script exporting `PATH`,
+    `LD_LIBRARY_PATH`, and any required variables.
+  - `/opt/nuke/nukelab-toolchain.json` — manifest generated from the activation
+    script describing mounts and env vars.
+- `nuclear-base/` owns the shared toolchain used by `radiation-transport/`,
+  `moose/`, and `cardinal/`. Changes here trigger rebuilds of all dependent
+  images.
+- Large data downloads (cross-sections, chain files, Geant4 data) must use
+  separate scripts or cache mounts so layer rebuilds are incremental.
+- Build scripts live in `scripts/` and must be POSIX/Bash 4+ compatible.
+- The NAD framework from the main `nukelab` repository applies here; this
+  `AGENTS.md` is the local contract for environment-specific work.
+
+## Work Guidance
+
+- Keep images minimal; use multi-stage builds where the build toolchain can be
+  separated from the runtime image.
+- Use BuildKit cache mounts (`--mount=type=cache`) for C++ compilation and
+  package managers.
+- Pin upstream versions with `ARG`s at the top of each Dockerfile.
+- Do not bake secrets or credentials into images.
+- Update this `AGENTS.md` and `README.md` when adding, removing, or reparenting
+  an environment image.
+
+## Verification
+
+```bash
+./scripts/build.sh all
+```
+
+## Child NAD Index
+
+- None

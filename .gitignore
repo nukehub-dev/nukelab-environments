@@ -1,0 +1,15 @@
+# Build artifacts
+*.log
+*.tar
+*.tar.gz
+
+# Local image tags / state
+.local/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
