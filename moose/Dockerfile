@@ -2,8 +2,9 @@
 # Distributed under the terms of the BSD-2-Clause license.
 
 # MOOSE multiphysics framework environment.
+ARG REGISTRY=ghcr.io/nukehub-dev
 ARG BASE_TAG=v1.0.0
-ARG BASE_IMAGE=ghcr.io/nukelab/nuclear-base:${BASE_TAG}
+ARG BASE_IMAGE=${REGISTRY}/nuclear-base:${BASE_TAG}
 
 FROM $BASE_IMAGE
 

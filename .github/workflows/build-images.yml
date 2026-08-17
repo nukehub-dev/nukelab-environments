@@ -9,41 +9,17 @@ on:
   workflow_dispatch:
     inputs:
       base_tag:
-        description: 'Parent image tag to build against'
+        description: 'Base image tag for parent references'
         required: true
         default: 'v1.0.0'
 
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: ghcr.io/nukehub-dev
 
 jobs:
-  matrix:
-    name: ${{ matrix.image }}
+  build:
+    name: Build and publish environment images
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        image:
-          - nuclear-base
-          - radiation-transport
-          - moose
-          - cardinal
-          - openfoam
-          - gpu-toolkit
-        include:
-          - image: nuclear-base
-            parent: ghcr.io/nukelab/conda-base
-          - image: radiation-transport
-            parent: ghcr.io/nukelab/nuclear-base
-          - image: moose
-            parent: ghcr.io/nukelab/nuclear-base
-          - image: cardinal
-            parent: ghcr.io/nukelab/moose
-          - image: openfoam
-            parent: ghcr.io/nukelab/conda-base
-          - image: gpu-toolkit
-            parent: ghcr.io/nukelab/conda-base
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,28 +31,54 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/nukelab/${{ matrix.image }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=sha,prefix=,suffix=,format=short
+      - name: Determine image tags
+        id: version
+        run: |
+          ref="${GITHUB_REF:-refs/heads/main}"
+          sha="${GITHUB_SHA:-$(git rev-parse HEAD)}"
+          short_sha="${sha:0:7}"
+          case "$ref" in
+            refs/tags/v*.*.*)
+              tag="${ref#refs/tags/v}"
+              ;;
+            refs/heads/main)
+              tag="main"
+              ;;
+            refs/heads/*)
+              tag="${ref#refs/heads/}"
+              tag="${tag//[^a-zA-Z0-9_.-]/-}"
+              ;;
+            refs/pull/*/merge)
+              tag="${ref#refs/pull/}"
+              tag="${tag%/merge}"
+              tag="pr-$tag"
+              ;;
+            *)
+              tag="sha-$short_sha"
+              ;;
+          esac
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=sha-$short_sha" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: ./${{ matrix.image }}
-          file: ./${{ matrix.image }}/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            BASE_IMAGE=${{ matrix.parent }}:${{ github.event.inputs.base_tag || 'v1.0.0' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Build images
+        if: github.event_name == 'pull_request'
+        run: ./scripts/build.sh all --parallel
+        env:
+          REGISTRY: ${{ env.REGISTRY }}
+          BASE_TAG: ${{ github.event.inputs.base_tag || 'v1.0.0' }}
+          TOOLCHAIN_VERSION: ${{ github.event.inputs.base_tag || 'v1.0.0' }}
+          CONTAINER_ENGINE: docker
+
+      - name: Build and push images
+        if: github.event_name != 'pull_request'
+        run: ./scripts/build.sh all --parallel --push
+        env:
+          REGISTRY: ${{ env.REGISTRY }}
+          BASE_TAG: ${{ github.event.inputs.base_tag || steps.version.outputs.tag }}
+          SHA_TAG: ${{ steps.version.outputs.sha_tag }}
+          TOOLCHAIN_VERSION: ${{ steps.version.outputs.tag }}
+          CONTAINER_ENGINE: docker

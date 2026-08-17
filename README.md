@@ -37,19 +37,19 @@ force MOAB, Geant4, or OpenMC to recompile.
 ## Image hierarchy
 
 ```text
-ghcr.io/nukelab/base
-└── ghcr.io/nukelab/conda-base          # shared conda/Python/build foundation
-    ├── ghcr.io/nukelab/workspace       # runtime image (IDE)
-    ├── ghcr.io/nukelab/nuclear-base    # toolchain image
-    │   ├── ghcr.io/nukelab/radiation-transport
-    │   ├── ghcr.io/nukelab/moose
-    │   └── ghcr.io/nukelab/cardinal
-    ├── ghcr.io/nukelab/gpu-toolkit     # toolchain image
-    └── ghcr.io/nukelab/openfoam        # toolchain image
+ghcr.io/nukehub-dev/base
+└── ghcr.io/nukehub-dev/conda-base          # shared conda/Python/build foundation
+    ├── ghcr.io/nukehub-dev/workspace       # runtime image (IDE)
+    ├── ghcr.io/nukehub-dev/nuclear-base    # toolchain image
+    │   ├── ghcr.io/nukehub-dev/radiation-transport
+    │   ├── ghcr.io/nukehub-dev/moose
+    │   └── ghcr.io/nukehub-dev/cardinal
+    ├── ghcr.io/nukehub-dev/gpu-toolkit     # toolchain image
+    └── ghcr.io/nukehub-dev/openfoam        # toolchain image
 ```
 
 `base` and `conda-base` are built and published from the main `nukelab/nukelab`
-repository. All toolchain images in this repo inherit from `ghcr.io/nukelab/conda-base`.
+repository. All toolchain images in this repo inherit from `ghcr.io/nukehub-dev/conda-base`.
 
 ## Toolchain contract
 
@@ -100,12 +100,12 @@ Example manifest:
 
 | Directory | Image | Kind | Description |
 |-----------|-------|------|-------------|
-| `nuclear-base/` | `ghcr.io/nukelab/nuclear-base` | toolchain | MOAB, Double-Down, Geant4, DAGMC, libMesh, NJOY2016 |
-| `radiation-transport/` | `ghcr.io/nukelab/radiation-transport` | toolchain | OpenMC, PyNE, KDSource, ALARA, cross-section data |
-| `moose/` | `ghcr.io/nukelab/moose` | toolchain | MOOSE framework scaffold |
-| `cardinal/` | `ghcr.io/nukelab/cardinal` | toolchain | MOOSE + OpenMC coupling scaffold |
-| `openfoam/` | `ghcr.io/nukelab/openfoam` | toolchain | OpenFOAM CFD scaffold |
-| `gpu-toolkit/` | `ghcr.io/nukelab/gpu-toolkit` | toolchain | NVIDIA CUDA toolkit |
+| `nuclear-base/` | `ghcr.io/nukehub-dev/nuclear-base` | toolchain | MOAB, Double-Down, Geant4, DAGMC, libMesh, NJOY2016 |
+| `radiation-transport/` | `ghcr.io/nukehub-dev/radiation-transport` | toolchain | OpenMC, PyNE, KDSource, ALARA, cross-section data |
+| `moose/` | `ghcr.io/nukehub-dev/moose` | toolchain | MOOSE framework scaffold |
+| `cardinal/` | `ghcr.io/nukehub-dev/cardinal` | toolchain | MOOSE + OpenMC coupling scaffold |
+| `openfoam/` | `ghcr.io/nukehub-dev/openfoam` | toolchain | OpenFOAM CFD scaffold |
+| `gpu-toolkit/` | `ghcr.io/nukehub-dev/gpu-toolkit` | toolchain | NVIDIA CUDA toolkit |
 | `scripts/` | — | — | Shared build helpers and CI entry points |
 
 ## Build locally
@@ -131,17 +131,22 @@ BuildKit cache mounts are used for C++ compilation. To disable the layer cache:
 
 ## CI / Registry
 
-Images are built and published by GitHub Actions to `ghcr.io/nukelab/<image>`.
-See `.github/workflows/build-images.yml` for the matrix build configuration.
+Images are built and published by GitHub Actions to `ghcr.io/nukehub-dev/<image>`.
+The workflow in `.github/workflows/build-images.yml` runs `./scripts/build.sh`,
+which discovers Dockerfiles automatically, topologically sorts images by their
+`ARG BASE_IMAGE` dependencies, and builds each dependency level in parallel.
+Both Docker and Podman are supported via auto-detection (or `CONTAINER_ENGINE`).
+Adding a new image does not require editing the workflow or build script.
 
 ## Adding a new environment
 
 1. Create a new directory under this repo root.
-2. Inherit from `ghcr.io/nukelab/conda-base`.
+2. Inherit from a published NukeLab parent image via `ARG BASE_IMAGE=...`.
 3. Install everything under `/opt/nuke`.
 4. Provide `toolchain-env.sh` and generate the manifest with
    `nukelab-generate-toolchain-manifest` (copy the two-line pattern from
    `nuclear-base/` or `radiation-transport/`).
-5. Add the directory to the build matrix in `.github/workflows/build-images.yml`
-   and to `scripts/build.sh`.
-6. Update the image hierarchy diagram in this README.
+5. Update the image hierarchy diagram in this README.
+
+No workflow or build-script edits are required; both `./scripts/build.sh` and
+`.github/workflows/build-images.yml` discover the new image automatically.

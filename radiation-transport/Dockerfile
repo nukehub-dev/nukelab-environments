@@ -5,8 +5,9 @@
 # Extends nukelab-nuclear-base with OpenMC, PyNE, KDSource, ALARA, and data.
 # All software lives under /opt/nuke so the image can be mounted as a single
 # toolchain volume into the workspace runtime.
+ARG REGISTRY=ghcr.io/nukehub-dev
 ARG BASE_TAG=v1.0.0
-ARG BASE_IMAGE=ghcr.io/nukelab/nuclear-base:${BASE_TAG}
+ARG BASE_IMAGE=${REGISTRY}/nuclear-base:${BASE_TAG}
 ARG CI_JOBS=4
 ARG PYTHON_VERSION=3.13
 

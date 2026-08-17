@@ -15,8 +15,8 @@ All files under this repository root.
 - Each subdirectory under the root (except `scripts/` and `.github/`) defines one
   published toolchain image.
 - Toolchain images must inherit from a published NukeLab parent image
-  (`ghcr.io/nukelab/conda-base` for roots, or another published toolchain image
-  for extensions). They must never depend on local-only tags.
+  (`ghcr.io/nukehub-dev/conda-base` for roots, or another published toolchain
+  image for extensions). They must never depend on local-only tags.
 - Every toolchain image installs software under `/opt/nuke` so the whole
   directory can be mounted as a single volume into the workspace runtime.
 - Every toolchain image must provide:
