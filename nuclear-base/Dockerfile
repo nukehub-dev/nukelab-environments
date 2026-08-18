@@ -58,6 +58,11 @@ ENV PATH="${NUKE_DIR}/bin:${MOAB_ROOT}/bin:${DOUBLE_DOWN_ROOT}/lib:${GEANT4_ROOT
     LD_LIBRARY_PATH="${MOAB_ROOT}/lib:${DOUBLE_DOWN_ROOT}/lib:${GEANT4_ROOT}/lib:${DAGMC_ROOT}/lib:${LIBMESH_ROOT}/lib:${NJOY2016_ROOT}/lib"
 
 # Create the shared conda prefix that child images extend.
+# meshio/netCDF4 plus the svgpathtools..trianglesolver line are build123d's
+# runtime dependencies (build123d itself is pip-installed below — see comment
+# there). conda ocpsvg is deliberately absent: its 0.5.0 build requires
+# ocp <7.9, so the solver would walk back to the ancient 0.2.1 — the pip
+# 0.6.0 below targets OCP 7.9.
 RUN conda create --yes -p ${NUKE_DIR} \
         python=${PYTHON_VERSION} \
         ipykernel \
@@ -65,8 +70,29 @@ RUN conda create --yes -p ${NUKE_DIR} \
         paraview \
         cadquery \
         pythonocc-core \
-        python-gmsh && \
+        python-gmsh \
+        meshio \
+        netcdf4 \
+        svgpathtools \
+        svgelements \
+        anytree \
+        ezdxf \
+        trianglesolver && \
     conda clean --all -f -y
+
+# build123d (nuke-cad script authoring) cannot come from conda in this env:
+# ParaView forces the solver onto the OCP 7.9 line, where conda would silently
+# pick the broken build123d 0.7.0 (0.9.1 declares cadquery-ocp <7.9,>=7.8, and
+# OCP 7.9 removed the TopoDS `*_s` downcast statics build123d uses). Install
+# the pure-Python packages --no-deps so they cannot disturb conda's binary
+# stack (py-lib3mf is pip-only, pure Python, zero deps; ocpsvg 0.6.0 targets
+# OCP 7.9). OCP 7.9 compatibility is handled by nuke-ide itself: nuke-cad's
+# geometry service re-attaches the aliases before running user scripts
+# (extensions/nuke-cad/python/ocp_compat.py), so IDE-driven build123d works
+# out of the box. A bare `import build123d` (e.g. in a notebook) does NOT get
+# the aliases here — if that is ever needed, apply nuke-cad's shim in-session.
+RUN ${NUKE_DIR}/bin/python -m pip install --no-cache-dir --no-deps \
+        build123d==0.9.1 ocpsvg==0.6.0 py-lib3mf
 
 # Register /opt/nuke as a system-wide envs_dir so the runtime user sees it.
 RUN conda config --system --append envs_dirs /opt/nuke
