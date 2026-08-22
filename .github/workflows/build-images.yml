@@ -69,8 +69,8 @@ jobs:
         run: ./scripts/build.sh all --parallel
         env:
           REGISTRY: ${{ env.REGISTRY }}
-          BASE_TAG: ${{ github.event.inputs.base_tag || 'v1.0.0' }}
-          TOOLCHAIN_VERSION: ${{ github.event.inputs.base_tag || 'v1.0.0' }}
+          BASE_TAG: ${{ github.event.inputs.base_tag || 'latest' }}
+          TOOLCHAIN_VERSION: ${{ github.event.inputs.base_tag || 'latest' }}
           CONTAINER_ENGINE: docker
 
       - name: Build and push images
@@ -78,7 +78,7 @@ jobs:
         run: ./scripts/build.sh all --parallel --push
         env:
           REGISTRY: ${{ env.REGISTRY }}
-          BASE_TAG: ${{ github.event.inputs.base_tag || steps.version.outputs.tag }}
+          BASE_TAG: ${{ github.event.inputs.base_tag || (startsWith(github.ref, 'refs/tags/v') && steps.version.outputs.tag) || 'latest' }}
           SHA_TAG: ${{ steps.version.outputs.sha_tag }}
           TOOLCHAIN_VERSION: ${{ steps.version.outputs.tag }}
           CONTAINER_ENGINE: docker
