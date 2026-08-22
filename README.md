@@ -19,7 +19,7 @@ separate from the main platform repository allows:
 
 NukeLab servers are created from two independent images:
 
-1. **Runtime image** (`nukelab-workspace`) — nginx, auth sidecar, IDE, conda
+1. **Runtime image** (`nukelab-environment-workspace`) — nginx, auth sidecar, IDE, conda
    base. Built in the main `nukelab/nukelab` repository.
 2. **Toolchain image** (`nukelab-nuclear-base`, `nukelab-radiation-transport`,
    `nukelab-gpu-toolkit`, etc.) — scientific software installed under
@@ -31,25 +31,26 @@ At spawn time the backend:
 - Mounts it at `/opt/nuke` inside the workspace container
 - Injects the environment variables declared in the toolchain manifest
 
-This means updating `nukelab-workspace` (e.g., a new IDE version) does **not**
+This means updating `nukelab-environment-workspace` (e.g., a new IDE version) does **not**
 force MOAB, Geant4, or OpenMC to recompile.
 
 ## Image hierarchy
 
 ```text
-ghcr.io/nukehub-dev/base
-└── ghcr.io/nukehub-dev/conda-base          # shared conda/Python/build foundation
-    ├── ghcr.io/nukehub-dev/workspace       # runtime image (IDE)
-    ├── ghcr.io/nukehub-dev/nuclear-base    # toolchain image
+ghcr.io/nukehub-dev/nukelab-environment-base
+└── ghcr.io/nukehub-dev/nukelab-environment-conda-base    # shared conda/Python/build foundation
+    ├── ghcr.io/nukehub-dev/nukelab-environment-workspace # runtime image (IDE)
+    ├── ghcr.io/nukehub-dev/nuclear-base                  # toolchain image
     │   ├── ghcr.io/nukehub-dev/radiation-transport
     │   ├── ghcr.io/nukehub-dev/moose
     │   └── ghcr.io/nukehub-dev/cardinal
-    ├── ghcr.io/nukehub-dev/gpu-toolkit     # toolchain image
-    └── ghcr.io/nukehub-dev/openfoam        # toolchain image
+    ├── ghcr.io/nukehub-dev/gpu-toolkit                   # toolchain image
+    └── ghcr.io/nukehub-dev/openfoam                      # toolchain image
 ```
 
-`base` and `conda-base` are built and published from the main `nukelab/nukelab`
-repository. All toolchain images in this repo inherit from `ghcr.io/nukehub-dev/conda-base`.
+`nukelab-environment-base` and `nukelab-environment-conda-base` are built and
+published from the main `nukelab/nukelab` repository. All toolchain images in
+this repo inherit from `ghcr.io/nukehub-dev/nukelab-environment-conda-base`.
 
 ## Toolchain contract
 

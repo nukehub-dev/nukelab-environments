@@ -4,7 +4,7 @@
 # GPU toolchain: NVIDIA CUDA toolkit mounted into the workspace runtime.
 ARG REGISTRY=ghcr.io/nukehub-dev
 ARG BASE_TAG=v1.0.0
-ARG BASE_IMAGE=${REGISTRY}/conda-base:${BASE_TAG}
+ARG BASE_IMAGE=${REGISTRY}/nukelab-environment-conda-base:${BASE_TAG}
 ARG CUDA_VERSION=12.6
 
 FROM $BASE_IMAGE

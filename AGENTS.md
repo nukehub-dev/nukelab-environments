@@ -3,7 +3,7 @@
 ## Purpose
 
 Scientific computing toolchain images and build pipelines for the NukeLab
-platform. Toolchain images are mounted as volumes into the `nukelab-workspace`
+platform. Toolchain images are mounted as volumes into the `nukelab-environment-workspace`
 runtime container rather than extending it.
 
 ## Ownership
@@ -15,7 +15,7 @@ All files under this repository root.
 - Each subdirectory under the root (except `scripts/` and `.github/`) defines one
   published toolchain image.
 - Toolchain images must inherit from a published NukeLab parent image
-  (`ghcr.io/nukehub-dev/conda-base` for roots, or another published toolchain
+  (`ghcr.io/nukehub-dev/nukelab-environment-conda-base` for roots, or another published toolchain
   image for extensions). They must never depend on local-only tags.
 - Every toolchain image installs software under `/opt/nuke` so the whole
   directory can be mounted as a single volume into the workspace runtime.
