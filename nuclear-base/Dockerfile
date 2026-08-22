@@ -37,11 +37,13 @@ ARG NJOY2016_BRANCH
 ARG DOWNLOAD_GEANT4_DATA
 
 # Graphics and visualization libraries used by Geant4/ParaView/VTK.
+# libembree-dev is required by Double-Down (a ray-tracing helper used by DAGMC).
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         libxft-dev \
         libxext-dev \
-        libglu1-mesa-dev && \
+        libglu1-mesa-dev \
+        libembree-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # All nuclear tooling is installed under /opt/nuke so a single volume mount
