@@ -87,10 +87,13 @@ parent_of() {
 
 # Topologically sort discovered images by dependency depth.
 # Prints "<level> <image>" per line, sorted by level then image name.
+# Parents that are not discovered in this repository (e.g. base images built
+# elsewhere) are treated as external roots with depth 0.
 sort_images() {
 	local -a all_images
 	local -A parents
 	local -A depth
+	local -A discovered
 
 	mapfile -t all_images < <(discover_images)
 
@@ -100,21 +103,20 @@ sort_images() {
 	fi
 
 	for image in "${all_images[@]}"; do
+		discovered["$image"]=1
 		parents["$image"]=$(parent_of "$image")
 		depth["$image"]=0
 	done
 
-	# Iteratively propagate depths until stable.
+	# Iteratively propagate depths until stable. Skip parents that are not
+	# discovered locally; they are external images and this repo cannot build
+	# them, so treat them as roots.
 	local changed=1
 	while [ "$changed" -eq 1 ]; do
 		changed=0
 		for image in "${all_images[@]}"; do
 			parent="${parents[$image]:-}"
-			if [ -n "$parent" ] && [ "$parent" != "conda-base" ]; then
-				if [ -z "${depth[$parent]:-}" ]; then
-					echo "Error: $image depends on unknown parent '$parent'" >&2
-					exit 1
-				fi
+			if [ -n "$parent" ] && [ -n "${discovered[$parent]:-}" ]; then
 				new_depth=$((depth[$parent] + 1))
 				if [ "$new_depth" -gt "${depth[$image]}" ]; then
 					depth["$image"]=$new_depth
@@ -230,7 +232,9 @@ main() {
 
 	case "$target" in
 	all)
-		mapfile -t build_order < <(sort_images)
+		local sort_images_output
+		sort_images_output=$(sort_images) || exit 1
+		mapfile -t build_order <<< "$sort_images_output"
 
 		# Group by dependency level so --parallel can run independent images
 		# within a level at the same time.
